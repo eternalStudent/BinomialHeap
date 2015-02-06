@@ -9,6 +9,14 @@ public class BinomialHeap{
 	private HeapNode first;
 	private HeapNode min;
 	private int size;
+	
+	public BinomialHeap(){}
+	
+	public BinomialHeap(HeapNode node){
+		first = node;
+		min = node;
+		size = 1;
+	}
 
    /**
     * public boolean empty()
@@ -30,18 +38,30 @@ public class BinomialHeap{
     *
     */
     public void insert(int value){
+    	HeapNode node = new HeapNode(value);
     	if (empty()){
-    		HeapNode node = new HeapNode(value);
     		first = node;
     		min = node;
     	}
     	else{
-    		BinomialHeap heap2 = new BinomialHeap();
-    		heap2.insert(value);
+    		BinomialHeap heap2 = new BinomialHeap(node);
     		meld(heap2);
     	}
-    	size++;
     }
+    
+   private void updateMin(){
+	   if (empty()){
+		   min = null;
+		   return;
+	   }	   
+	   min = first;
+	   HeapNode node = first.sibling;
+	   while(node != null){
+		   if (node.key<findMin())
+			   min = node;
+		   node = node.sibling;
+	   }
+   }
 
    /**
     * public void deleteMin()
@@ -52,22 +72,21 @@ public class BinomialHeap{
     public void deleteMin(){
     	if (empty())
     		return;
-    	HeapNode node = first;
-    	while(node.sibling != min)
-    		node = node.sibling;
-    	node.sibling = node.sibling.sibling;
+    	
+    	//create new BinomialHeap to be merged
     	BinomialHeap heap2 = new BinomialHeap();
     	heap2.first = min.child;
-    	heap2.first.sibling = null;
-    	node = heap2.first;
-    	heap2.min = heap2.first;
-    	while(node != null){
-    		if (node.key<heap2.findMin())
-    			heap2.min = node;
-    		node = node.sibling;
-    	}
+    	heap2.updateMin();
     	heap2.size = (int) Math.pow(2, heap2.first.rank+1)-1;
+    	
+    	//disconnect min
+    	HeapNode minPrev = first;
+    	while(minPrev.sibling != min)
+    		minPrev = minPrev.sibling;
+    	minPrev.sibling = min.sibling;
+    	updateMin();
     	size -= heap2.size+1;
+    	
     	meld(heap2);
     }
 
@@ -149,17 +168,19 @@ public class BinomialHeap{
     			continue;
     		}
     		if (node2.rank < node1.rank){
+    			HeapNode node2Sibling = node2.sibling;
     			node2.sibling = node1;
     			if (prev != null)
     				prev.sibling = node2;
     			else
     				first = node2;
-    			node2 = node1;			//same as node2 = node2.sibling
+    			node2 = node2Sibling;
     			continue;
     		}
     		if (node2.rank == node1.rank){
+    			//disconnect node1
     			if (prev != null)
-    				prev.sibling = node1.sibling; //disconnect node1
+    				prev.sibling = node1.sibling; 
     			else
     				first = node1.sibling;
     			addCarry(meldTwoTreesWithSameRank(node1, node2));
@@ -249,14 +270,9 @@ public class BinomialHeap{
     	private int key, rank;
     	private HeapNode child;
     	private HeapNode sibling;
-    	//private HeapNode parent;
     	
     	protected HeapNode(int key){
     		this.key = key;
-    	}
-    	
-    	public int getKey(){
-    		return key;
     	}
   	
     }
