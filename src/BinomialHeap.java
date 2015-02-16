@@ -11,12 +11,12 @@ public class BinomialHeap{
 	private int size;
 	
 	/**
-	 * Default constructor, crate empty heap.
+	 * Default constructor, creates empty heap.
 	 */
 	public BinomialHeap(){}
 	
 	/**
-	 * Create binomial heap with a specified node.
+	 * Creates binomial heap with a specified node.
 	 * @param node  the node to be added to the heap.
 	 */
 	private BinomialHeap(HeapNode node){
@@ -74,7 +74,7 @@ public class BinomialHeap{
      }
      
      /**
-      *remove all the elements from the heap.
+      *Remove all the elements from the heap.
       */
      
      public void removeAll(){
@@ -84,7 +84,7 @@ public class BinomialHeap{
      }
 
     /**
-     * Insert the array to the heap. Delete previous elements in the heap.
+     * Inserts the array to the heap. Deletes previous elements in the heap.
      * 
      * @param array  the array of keys to be added to the heap.
      */
@@ -95,7 +95,7 @@ public class BinomialHeap{
      }
 		
    /**
-    * Insert value into the heap.
+    * Inserts value into the heap.
     * 
     * @param value  the key of the element to be added to the heap.
     * @throws IllegalArgumentException if the value is negative.
@@ -115,7 +115,7 @@ public class BinomialHeap{
     } 
 
    /**
-    * Delete the minimum value.
+    * Deletes the minimum value.
     */
     public void deleteMin(){
     	if (empty())
@@ -128,11 +128,11 @@ public class BinomialHeap{
     private void updateMin(){
  	   min = first;
  	   if (!empty()){
- 		   HeapNode node = first.sibling;
- 		   while(node != null){
- 			   if (node.value<findMin())
- 				   min = node;
- 			   node = node.sibling;
+ 		   HeapNode tree = first.sibling;
+ 		   while(tree != null){
+ 			   if (tree.value<findMin())
+ 				   min = tree;
+ 			   tree = tree.sibling;
  		   }
  	   }
     }
@@ -155,10 +155,10 @@ public class BinomialHeap{
    
    private HeapNode[] toTreesArray(){
  	   HeapNode[] trees = new HeapNode[maxTreeRank()+1];
- 	   HeapNode node = first;
- 	   while (node != null){
- 		   trees[node.rank] = node;
- 		   node = node.sibling;
+ 	   HeapNode tree = first;
+ 	   while (tree != null){
+ 		   trees[tree.rank] = tree;
+ 		   tree = tree.sibling;
  	   }
  	   return trees;
    }
@@ -199,80 +199,67 @@ public class BinomialHeap{
    }
     
    /**
-    * Meld the heap with heap2.
+    * Melds the heap with heap2.
     * 
     * @param heap2  the heap to be melt with the instance
     */
     public void meld (BinomialHeap heap2){    	
-    	if (heap2.empty())
-    		return;
-    	if (empty()){
-    		first = heap2.first;
-    		min = heap2.min;
-    		size = heap2.size;
-    		return;
-    	}
-
     	size += heap2.size;
-    	if (heap2.findMin()<findMin())
+    	if (!heap2.empty() && (empty() || heap2.findMin()<findMin()))
     		min = heap2.min;
     	
-    	HeapNode node1 = first; 			//will iterate over the main heap
-    	HeapNode node2 = heap2.first; 		//will iterate over the second heap
-    	HeapNode prev = null;				//previous sibling of node1
+    	HeapNode tree1 = first; 			//will iterate over the main heap
+    	HeapNode tree2 = heap2.first; 		//will iterate over the second heap
+    	HeapNode prev = null;				//previous sibling of tree1
     	
-    	while (node1 != null & node2 != null){
-    		if (node1.rank < node2.rank){
-    			prev = node1;
-    			node1 = node1.sibling;
+    	while (tree2 != null){
+    		if (tree1 == null){
+    			connect(prev, tree2, tree2.sibling);
+    			break;
+    		}
+    		if (tree1.rank < tree2.rank){
+    			prev = tree1;
+    			tree1 = tree1.sibling;
     			continue;
     		}
-    		if (node2.rank < node1.rank){
-    			HeapNode node2Sibling = node2.sibling;
-    			connect(prev, node2, node1);
-    			prev = node2;
-    			node2 = node2Sibling;
+    		if (tree2.rank < tree1.rank){
+    			HeapNode node2Sibling = tree2.sibling;
+    			connect(prev, tree2, tree1);
+    			prev = tree2;
+    			tree2 = node2Sibling;
     			continue;
     		}
-    		if (node2.rank == node1.rank){
-    			disconnect(prev, node1);
-    			HeapNode node2Sibling = node2.sibling;
-    			addCarry(meldTwoTreesWithSameRank(node1, node2));
-    			node1 = first;
+    		if (tree2.rank == tree1.rank){
+    			disconnect(prev, tree1);
+    			HeapNode node2Sibling = tree2.sibling;
+    			addCarry(meldTwoTreesWithSameRank(tree1, tree2));
+    			tree1 = first;
     			prev = null;
-    			node2 = node2Sibling;
+    			tree2 = node2Sibling;
     			continue;
     		}
     	}
     }
     
     private void addCarry(HeapNode carry){
-    	HeapNode node = first; 	//will iterate over the heap
-    	HeapNode prev = null; 	//previous sibling of node
+    	HeapNode tree = first; 	//will iterate over the heap
+    	HeapNode prev = null; 	//previous sibling of tree
     	
     	while (true){
-    		if (empty()){
-        		first = carry;
-        		return;
-        	}
-    		if (node == null){
-    			prev.sibling = carry;
+    		if (tree == null || tree.rank > carry.rank){
+    			connect(prev, carry, tree);
     			return;
     		}
-    		if (node.rank > carry.rank){
-    			connect(prev, carry, node);
-    			return;
-    		}
-    		if (node.rank < carry.rank){
-    			prev = node;
-    			node = node.sibling;
+    		if (tree.rank < carry.rank){
+    			prev = tree;
+    			tree = tree.sibling;
     			continue;
     		}
-    		if (node.rank == carry.rank){
-    			HeapNode nodeSibling = node.sibling;
-    			disconnect(prev, node);
-    			carry = meldTwoTreesWithSameRank(carry, node);
-    			node = nodeSibling;
+    		if (tree.rank == carry.rank){
+    			HeapNode nodeSibling = tree.sibling;
+    			disconnect(prev, tree);
+    			carry = meldTwoTreesWithSameRank(carry, tree);
+    			tree = nodeSibling;
     			continue;
     		}
     	}
@@ -309,65 +296,65 @@ public class BinomialHeap{
     * @return true if and only if the heap is valid.
     */
     public boolean isValid(){
-    	return isHeapOrderValid() && isHeapRanksValid() && isEveryRankUnique();
+    	return isHeapOrderValid() && isHeapBinomial() && isEveryRankUnique();
+    }
+    
+    private boolean isHeapOrderValid(){
+    	HeapNode tree = first;
+    	while(tree != null){
+    		if (!isOrderValid(tree))
+    			return false;
+    		tree = tree.sibling;
+    	}	
+    	return true;
     }
     
     private boolean isOrderValid(HeapNode parent){
     	if (parent == null)
     		return true;
-    	HeapNode node = parent.child;
-    	while (node != null){
-    		if (node.value < parent.value || !isOrderValid(node))
+    	HeapNode child = parent.child;
+    	while (child != null){
+    		if (child.value < parent.value || !isOrderValid(child))
     			return false;
-    		node = node.sibling;
+    		child = child.sibling;
     	}
     	return true;
     }
     
-    private boolean isHeapOrderValid(){
-    	HeapNode node = first;
-    	while(node != null){
-    		if (!isOrderValid(node))
+    private boolean isHeapBinomial(){
+    	HeapNode tree = first;
+    	while(tree != null){
+    		if (!isBinomialSubtree(tree))
     			return false;
-    		node = node.sibling;
+    		tree = tree.sibling;
     	}	
     	return true;
     }
     
-    private boolean isRankValid(HeapNode parent){
+    private boolean isBinomialSubtree(HeapNode parent){
     	if (parent == null)
     		return true;
     	int size=0;
-    	HeapNode node = parent.child;
-    	while(node != null){
-    		if (!isRankValid(node))
-    			return false;
+    	HeapNode child = parent.child;
+    	while(child != null){
     		size++;
-    		node = node.sibling;
+    		if (!(parent.rank-size == child.rank) || !isBinomialSubtree(child))
+    			return false;
+    		child = child.sibling;
     	}
     	return (size == parent.rank);
-    }
-    
-    private boolean isHeapRanksValid(){
-    	HeapNode node = first;
-    	while(node != null){
-    		if (!isRankValid(node))
-    			return false;
-    		node = node.sibling;
-    	}	
-    	return true;
     }
     
     private boolean isEveryRankUnique(){
     	boolean[] arr = new boolean[maxTreeRank()+1];
 		for (int i=0; i<arr.length; i++)
 			arr[i] = false;
-		HeapNode node = first;
-		while(node != null){
-			if (arr[node.rank])
+		HeapNode tree = first;
+		while(tree != null){
+			if (arr[tree.rank])
 				return false;
-			arr[node.rank] = true;
-			node = node.sibling;
+			arr[tree.rank] = true;
+			tree = tree.sibling;
 		}
     	return true;
     }
@@ -379,18 +366,18 @@ public class BinomialHeap{
     	if (empty())
     		return "empty";
     	StringBuilder st = new StringBuilder("{");
-    	HeapNode node = first;
-    	while (node != null){
-    		st.append(node.rank+". "+node);
-    		if (node.sibling != null)
+    	HeapNode tree = first;
+    	while (tree != null){
+    		st.append(tree.rank+". "+tree);
+    		if (tree.sibling != null)
     			st.append(", ");
-    		node = node.sibling;
+    		tree = tree.sibling;
     	}	
     	return st+"}";
     }
     
     /**
-     * Print the string representation of the heap to the console. 
+     * Prints the string representation of the heap to the console. 
      */
     public void print(){
     	System.out.println(this);
@@ -434,12 +421,20 @@ public class BinomialHeap{
     	}
     	System.out.println(heap.isEveryRankUnique());
     	System.out.println(heap.isHeapOrderValid());
-    	System.out.println(heap.isHeapRanksValid());
+    	System.out.println(heap.isHeapBinomial());
     	for (int i=0; i<31; i++){
     		System.out.println((i+1)+". "+heap.findMin());
     		heap.deleteMin();
     		//heap.print();
     	}
+    	int[] arr = {1,2,3,4,5,6};
+    	heap.arrayToHeap(arr);
+    	heap.print();
+    	int[] arr2 = {7,8,9,10,11,12,13,14,15};
+    	BinomialHeap heap2 = new BinomialHeap();
+    	heap2.arrayToHeap(arr2);
+    	heap.meld(heap2);
+    	heap.print();
     }
 
 }
